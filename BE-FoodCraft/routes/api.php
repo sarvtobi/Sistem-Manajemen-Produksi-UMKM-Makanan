@@ -4,6 +4,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\OwnerController;
 use App\Http\Controllers\StaffController;
+use App\Http\Controllers\UmkmController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -32,6 +33,16 @@ Route::middleware('auth:sanctum')->group(function () {
     // Owner routes
     Route::middleware('role:owner')->group(function () {
         Route::get('/owner/dashboard', [OwnerController::class, 'index']);
+
+        // UMKM management
+        Route::post('/owner/umkm', [UmkmController::class, 'store']);
+        Route::get('/owner/umkm', [UmkmController::class, 'show']);
+
+        // Staff management
+        Route::post('/owner/staff', [OwnerController::class, 'createStaff']);
+        Route::get('/owner/staff', [OwnerController::class, 'indexStaff']);
+        Route::put('/owner/staff/{id}', [OwnerController::class, 'updateStaff']);
+        Route::delete('/owner/staff/{id}', [OwnerController::class, 'deleteStaff']);
     });
 
     // Staff routes

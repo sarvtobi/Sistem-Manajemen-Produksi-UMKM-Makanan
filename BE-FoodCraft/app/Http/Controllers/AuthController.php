@@ -5,36 +5,32 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
     /**
-     * Register a new user.
+     * Register a new owner.
      *
      * POST /api/register
+     * Hanya untuk owner UMKM. Staff didaftarkan oleh owner.
      */
     public function register(Request $request)
     {
         $validated = $request->validate([
-            'name'    => 'required|string|max:255',
-            'email'   => 'required|string|email|max:255|unique:users,email',
+            'name'     => 'required|string|max:255',
+            'email'    => 'required|string|email|max:255|unique:users,email',
             'password' => 'required|string|min:6',
-            'role'    => 'required|string|in:super_admin,owner,staff',
-            'umkm_id' => 'nullable|integer',
         ]);
 
         $user = User::create([
-            'name'    => $validated['name'],
-            'email'   => $validated['email'],
-            'password' => Hash::make($validated['password']),
-            'role'    => $validated['role'],
-            'umkm_id' => $validated['umkm_id'] ?? null,
+            'name'     => $validated['name'],
+            'email'    => $validated['email'],
+            'password' => $validated['password'],
+            'role'     => User::ROLE_OWNER,
         ]);
 
         return response()->json([
-            'message' => 'User registered successfully',
+            'message' => 'Owner registered successfully',
             'user'    => $user,
         ], 201);
     }

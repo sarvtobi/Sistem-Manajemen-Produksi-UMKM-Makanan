@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -58,5 +60,21 @@ class User extends Authenticatable
     public function hasRole(string $role): bool
     {
         return $this->role === $role;
+    }
+
+    /**
+     * UMKM yang dimiliki oleh owner ini.
+     */
+    public function ownedUmkm(): HasOne
+    {
+        return $this->hasOne(Umkm::class, 'owner_id');
+    }
+
+    /**
+     * UMKM tempat staff ini bekerja.
+     */
+    public function umkm(): BelongsTo
+    {
+        return $this->belongsTo(Umkm::class, 'umkm_id');
     }
 }
