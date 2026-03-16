@@ -1,115 +1,89 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
-import api from '../api/axios';
-import type { User, LoginCredentials, RegisterData, AuthContextType } from '../types';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import api from '../lib/axios';
+
+export type UserRole = 'super_admin' | 'owner' | 'staff';
+
+export interface User {
+  id: number;
+  name: string;
+  email: string;
+  role: UserRole;
+  [key: string]: any;
+}
+
+interface AuthContextType {
+  user: User | null;
+  token: string | null;
+  login: (token: string, user: User) => void;
+  logout: () => void;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+}
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function getRedirectPath(role: string): string {
-  switch (role) {
-    case 'super_admin':
-      return '/admin';
-    case 'owner':
-      return '/owner';
-    case 'staff':
-      return '/staff';
-    default:
-      return '/login';
-  }
-}
-
-export function AuthProvider({ children }: { children: ReactNode }) {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
-  const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
+  const [token, setToken] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Check auth on mount
   useEffect(() => {
-    checkAuth();
+    const initializeAuth = async () => {
+      const storedToken = localStorage.getItem('token');
+      
+      if (storedToken) {
+        setToken(storedToken);
+        try {
+          const response = await api.get('/api/profile');
+          setUser(response.data.user || response.data);
+          localStorage.setItem('user', JSON.stringify(response.data.user || response.data));
+        } catch (error) {
+          console.error('Failed to fetch profile', error);
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          setToken(null);
+          setUser(null);
+        }
+      }
+      setIsLoading(false);
+    };
+
+    initializeAuth();
   }, []);
 
-  async function checkAuth() {
-    const storedToken = localStorage.getItem('token');
-    if (!storedToken) {
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const response = await api.get('/api/profile');
-      setUser(response.data.data ?? response.data.user ?? response.data);
-      setToken(storedToken);
-    } catch {
-      localStorage.removeItem('token');
-      setToken(null);
-      setUser(null);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function login(credentials: LoginCredentials) {
-    const response = await api.post('/api/login', credentials);
-    const newToken = response.data.data?.token ?? response.data.token;
-
+  const login = (newToken: string, newUser: User) => {
     localStorage.setItem('token', newToken);
+    localStorage.setItem('user', JSON.stringify(newUser));
     setToken(newToken);
+    setUser(newUser);
+  };
 
-    // Fetch user profile
-    const profileRes = await api.get('/api/profile');
-    const userData: User = profileRes.data.data ?? profileRes.data.user ?? profileRes.data;
-    setUser(userData);
-
-    // Redirect based on role
-    navigate(getRedirectPath(userData.role));
-  }
-
-  async function register(data: RegisterData) {
-    const response = await api.post('/api/register', data);
-    const newToken = response.data.data?.token ?? response.data.token;
-
-    if (newToken) {
-      localStorage.setItem('token', newToken);
-      setToken(newToken);
-
-      const profileRes = await api.get('/api/profile');
-      const userData: User = profileRes.data.data ?? profileRes.data.user ?? profileRes.data;
-      setUser(userData);
-
-      navigate(getRedirectPath(userData.role));
-    } else {
-      // If register doesn't return token, redirect to login
-      navigate('/login');
-    }
-  }
-
-  async function logout() {
+  const logout = async () => {
     try {
-      await api.post('/api/logout');
-    } catch {
-      // Ignore logout error
+      if (token) {
+        await api.post('/api/logout');
+      }
+    } catch (error) {
+      console.error('Logout failed', error);
     } finally {
       localStorage.removeItem('token');
+      localStorage.removeItem('user');
       setToken(null);
       setUser(null);
-      navigate('/login');
     }
-  }
+  };
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, token, login, logout, isAuthenticated: !!token, isLoading }}>
       {children}
     </AuthContext.Provider>
   );
-}
+};
 
-export function useAuth(): AuthContextType {
+export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-}
-
-export default AuthContext;
+};

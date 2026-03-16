@@ -1,35 +1,57 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
-import ProtectedRoute from './components/ProtectedRoute';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import AdminDashboard from './pages/dashboard/AdminDashboard';
-import OwnerDashboard from './pages/dashboard/OwnerDashboard';
-import StaffDashboard from './pages/dashboard/StaffDashboard';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './contexts/AuthContext';
+import { ProtectedRoute } from './components/ProtectedRoute';
+import { Layout } from './components/Layout';
 
-export default function App() {
+// Pages placeholders (will be implemented completely later)
+import Login from './pages/auth/Login';
+import Register from './pages/auth/Register';
+
+import AdminDashboard from './pages/admin/Dashboard';
+
+import OwnerDashboard from './pages/owner/Dashboard';
+import UMKMManagement from './pages/owner/UMKMManagement';
+import StaffManagement from './pages/owner/StaffManagement';
+
+import StaffDashboard from './pages/staff/Dashboard';
+
+function App() {
   return (
-    <Routes>
-      {/* Public Routes */}
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
+    <AuthProvider>
+      <Router>
+        <Routes>
+          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
 
-      {/* Protected Routes — Super Admin */}
-      <Route element={<ProtectedRoute allowedRoles={['super_admin']} />}>
-        <Route path="/admin" element={<AdminDashboard />} />
-      </Route>
+          {/* Protected Routes */}
+          <Route element={<ProtectedRoute />}>
+            <Route element={<Layout />}>
+              {/* Super Admin Routes */}
+              <Route element={<ProtectedRoute allowedRoles={['super_admin']} />}>
+                <Route path="/admin/dashboard" element={<AdminDashboard />} />
+              </Route>
 
-      {/* Protected Routes — Owner */}
-      <Route element={<ProtectedRoute allowedRoles={['owner']} />}>
-        <Route path="/owner" element={<OwnerDashboard />} />
-      </Route>
+              {/* Owner Routes */}
+              <Route element={<ProtectedRoute allowedRoles={['owner']} />}>
+                <Route path="/owner/dashboard" element={<OwnerDashboard />} />
+                <Route path="/owner/umkm" element={<UMKMManagement />} />
+                <Route path="/owner/staff" element={<StaffManagement />} />
+              </Route>
 
-      {/* Protected Routes — Staff */}
-      <Route element={<ProtectedRoute allowedRoles={['staff']} />}>
-        <Route path="/staff" element={<StaffDashboard />} />
-      </Route>
-
-      {/* Catch-all → redirect to login */}
-      <Route path="*" element={<Navigate to="/login" replace />} />
-    </Routes>
+              {/* Staff Routes */}
+              <Route element={<ProtectedRoute allowedRoles={['staff']} />}>
+                <Route path="/staff/dashboard" element={<StaffDashboard />} />
+              </Route>
+            </Route>
+          </Route>
+          
+          {/* Fallback */}
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
+      </Router>
+    </AuthProvider>
   );
 }
+
+export default App;
