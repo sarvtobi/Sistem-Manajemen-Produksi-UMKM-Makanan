@@ -1,31 +1,28 @@
 import { Navigate, Outlet } from 'react-router-dom';
-import { useAuth, getRedirectPath } from '../contexts/AuthContext';
+import { useAuth, type UserRole } from '../contexts/AuthContext';
 
 interface ProtectedRouteProps {
-  allowedRoles: string[];
+  allowedRoles?: UserRole[];
 }
 
-export default function ProtectedRoute({ allowedRoles }: ProtectedRouteProps) {
-  const { user, loading } = useAuth();
+export const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
+  const { isAuthenticated, isLoading, user } = useAuth();
 
-  if (loading) {
+  if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-surface">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-primary-400 border-t-transparent rounded-full animate-spin" />
-          <p className="text-slate-400 text-sm">Memuat...</p>
-        </div>
+      <div className="loader-container">
+        <div className="loader"></div>
       </div>
     );
   }
 
-  if (!user) {
+  if (!isAuthenticated || !user) {
     return <Navigate to="/login" replace />;
   }
 
-  if (!allowedRoles.includes(user.role)) {
-    return <Navigate to={getRedirectPath(user.role)} replace />;
+  if (allowedRoles && !allowedRoles.includes(user.role)) {
+    return <Navigate to="/unauthorized" replace />;
   }
 
   return <Outlet />;
-}
+};
