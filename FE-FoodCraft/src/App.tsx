@@ -8,6 +8,7 @@ import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 
 import AdminDashboard from './pages/admin/Dashboard';
+import AdminUserManagement from './pages/admin/UserManagement';
 
 import OwnerDashboard from './pages/owner/Dashboard';
 import UMKMManagement from './pages/owner/UMKMManagement';
@@ -30,6 +31,7 @@ function App() {
               {/* Super Admin Routes */}
               <Route element={<ProtectedRoute allowedRoles={['super_admin']} />}>
                 <Route path="/admin/dashboard" element={<AdminDashboard />} />
+                <Route path="/admin/users" element={<AdminUserManagement />} />
               </Route>
 
               {/* Owner Routes */}

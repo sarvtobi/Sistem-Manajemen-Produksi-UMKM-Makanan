@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../../lib/axios';
-import { Plus, X, Building2 } from 'lucide-react';
+import { Plus, X, Building2, Edit2 } from 'lucide-react';
 
 interface UMKM {
   id: number;
@@ -14,6 +14,7 @@ export default function UMKMManagement() {
   const [umkms, setUmkms] = useState<UMKM[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
   const [error, setError] = useState('');
   
   const [formData, setFormData] = useState({
@@ -51,13 +52,33 @@ export default function UMKMManagement() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await api.post('/api/owner/umkm', formData);
+      if (modalMode === 'create') {
+        await api.post('/api/owner/umkm', formData);
+      } else {
+        await api.put('/api/owner/umkm', formData);
+      }
       setIsModalOpen(false);
       setFormData({ name: '', description: '', address: '' });
       fetchUMKMs();
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to create UMKM');
+      setError(err.response?.data?.message || `Failed to ${modalMode === 'create' ? 'create' : 'update'} UMKM`);
     }
+  };
+
+  const openEditModal = (umkm: UMKM) => {
+    setModalMode('edit');
+    setFormData({
+      name: umkm.name,
+      description: umkm.description || '',
+      address: umkm.address
+    });
+    setIsModalOpen(true);
+  };
+
+  const openCreateModal = () => {
+    setModalMode('create');
+    setFormData({ name: '', description: '', address: '' });
+    setIsModalOpen(true);
   };
 
   return (
@@ -65,7 +86,7 @@ export default function UMKMManagement() {
       <div className="flex-between">
         <h1 className="page-header">Manajemen UMKM</h1>
         {umkms.length === 0 && (
-          <button className="btn btn-primary" onClick={() => setIsModalOpen(true)} style={{ width: 'auto' }}>
+          <button className="btn btn-primary" onClick={openCreateModal} style={{ width: 'auto' }}>
             <Plus size={18} /> Tambah UMKM
           </button>
         )}
@@ -90,15 +111,26 @@ export default function UMKMManagement() {
                   <th>Deskripsi</th>
                   <th>Alamat</th>
                   <th>Tanggal Daftar</th>
+                  <th style={{ textAlign: 'right' }}>Aksi</th>
                 </tr>
               </thead>
               <tbody>
                 {umkms.map((umkm) => (
                   <tr key={umkm.id}>
                     <td style={{ fontWeight: 500 }}>{umkm.name}</td>
-                    <td>{umkm.description}</td>
+                    <td>{umkm.description || '-'}</td>
                     <td>{umkm.address}</td>
                     <td>{new Date(umkm.created_at).toLocaleDateString()}</td>
+                    <td style={{ textAlign: 'right' }}>
+                      <button 
+                        className="btn btn-outline" 
+                        style={{ padding: '0.4rem', border: 'none', color: 'var(--text-main)' }} 
+                        onClick={() => openEditModal(umkm)}
+                        title="Edit UMKM"
+                      >
+                        <Edit2 size={16} /> Edit
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -112,7 +144,7 @@ export default function UMKMManagement() {
         <div className="modal-overlay">
           <div className="modal-content">
             <div className="modal-header">
-              <h2>Tambah UMKM Baru</h2>
+              <h2>{modalMode === 'create' ? 'Tambah UMKM Baru' : 'Edit UMKM'}</h2>
               <button className="modal-close" onClick={() => setIsModalOpen(false)}>
                 <X size={24} />
               </button>
@@ -151,7 +183,9 @@ export default function UMKMManagement() {
               
               <div className="modal-footer">
                 <button type="button" className="btn btn-outline" onClick={() => setIsModalOpen(false)}>Batal</button>
-                <button type="submit" className="btn btn-primary" style={{ width: 'auto' }}>Simpan UMKM</button>
+                <button type="submit" className="btn btn-primary" style={{ width: 'auto' }}>
+                  {modalMode === 'create' ? 'Simpan UMKM' : 'Update UMKM'}
+                </button>
               </div>
             </form>
           </div>

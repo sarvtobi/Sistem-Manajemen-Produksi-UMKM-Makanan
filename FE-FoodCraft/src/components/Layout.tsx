@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { LogOut, Menu, X, Home, Users, Store } from 'lucide-react';
+import { LogOut, Menu, X, Home, Users, Store, Settings } from 'lucide-react';
+import ProfileUpdateModal from './ProfileUpdateModal';
 
 export const Layout = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -18,6 +20,7 @@ export const Layout = () => {
       case 'super_admin':
         return [
           { name: 'Dashboard Admin', to: '/admin/dashboard', icon: <Home size={20} /> },
+          { name: 'Manajemen User', to: '/admin/users', icon: <Users size={20} /> },
         ];
       case 'owner':
         return [
@@ -79,7 +82,10 @@ export const Layout = () => {
                 <span className="user-role">{user?.role?.replace('_', ' ')}</span>
               </div>
             </div>
-            <button onClick={handleLogout} className="logout-btn">
+            <button onClick={() => setIsProfileModalOpen(true)} className="logout-btn" style={{ marginRight: '8px' }} title="Update Profile">
+              <Settings size={18} />
+            </button>
+            <button onClick={handleLogout} className="logout-btn" title="Logout">
               <LogOut size={18} />
               <span className="hide-mobile">Logout</span>
             </button>
@@ -93,6 +99,15 @@ export const Layout = () => {
 
       {/* Overlay for mobile sidebar */}
       {isSidebarOpen && <div className="sidebar-overlay" onClick={() => setIsSidebarOpen(false)}></div>}
+
+      {/* Profile Update Modal */}
+      <ProfileUpdateModal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+        onSuccess={() => {
+          // Additional success logic if needed (e.g., show toast)
+        }}
+      />
     </div>
   );
 };
