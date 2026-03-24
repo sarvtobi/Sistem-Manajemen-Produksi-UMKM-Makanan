@@ -36,4 +36,19 @@ class Umkm extends Model
     {
         return $this->hasMany(User::class, 'umkm_id')->where('role', User::ROLE_STAFF);
     }
+    /**
+     * UMKM memiliki banyak bahan baku.
+     */
+    public function bahanBakus(): HasMany
+    {
+        return $this->hasMany(BahanBaku::class, 'umkm_id');
+    }
+
+    /**
+     * UMKM memiliki banyak produk.
+     */
+    public function produks(): HasMany
+    {
+        return $this->hasMany(Produk::class, 'umkm_id');
+    }
 }
